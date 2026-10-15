@@ -6,7 +6,7 @@
     <script src="access-gate.js?v=20261015-red-session"></script>
     <title>CihuyAkz Studio Lite</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css?v=20261015-website-manager">
+    <link rel="stylesheet" href="style.css?v=20261015-website-confirm">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css">
@@ -89,6 +89,22 @@
                 </div>
                 <div id="login-error" role="alert" aria-live="polite" style="color:var(--color-danger);font-size:13px;margin:16px 0;text-align:center;display:none"></div>
                 <button class="btn btn-full" onclick="app.login()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="website-open-confirm-modal" class="modal-overlay website-open-confirm-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="website-open-confirm-title" aria-describedby="website-open-confirm-description" onclick="if(event.target===this) app.cancelWebsiteOpen()">
+        <div class="website-open-confirm-panel">
+            <div class="website-open-confirm-icon" aria-hidden="true">
+                <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"></path></svg>
+            </div>
+            <div class="website-open-confirm-eyebrow">EXTERNAL LINK</div>
+            <h2 id="website-open-confirm-title">Open this website?</h2>
+            <p id="website-open-confirm-description">You are about to leave CihuyAkz Studio Lite and visit an external website.</p>
+            <div class="website-open-confirm-destination" id="website-open-confirm-destination"></div>
+            <div class="website-open-confirm-actions">
+                <button type="button" class="btn btn-secondary" onclick="app.cancelWebsiteOpen()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="website-open-accept-button" onclick="app.acceptWebsiteOpen()">Accept <span aria-hidden="true">↗</span></button>
             </div>
         </div>
     </div>
@@ -312,6 +328,13 @@
                             </svg>
                             Bots
                         </button>
+                        <button class="tab-btn" data-admin-tab="websites" onclick="app.switchAdminTab('websites')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path>
+                            </svg>
+                            Manage Website
+                        </button>
                     </div>
                     <div class="admin-nav-note">Use one page for multiple related scripts.</div>
                 </div>
@@ -393,6 +416,61 @@
                         </div>
                     </div>
                     <div id="admin-list"></div>
+                </div>
+
+                <div id="admin-tab-websites" class="admin-tab" style="display:none">
+                    <div class="admin-list-header modern-list-header">
+                        <div>
+                            <span class="section-kicker">Website Category</span>
+                            <h2>Manage Website Pages</h2>
+                            <p class="editor-subtitle">Add, edit, or remove website links shown in the Website category.</p>
+                        </div>
+                        <button type="button" class="btn btn-sm" onclick="app.showWebsiteForm(null, 'admin')">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M5 12h14"></path>
+                            </svg>
+                            Add Website
+                        </button>
+                    </div>
+                    <form id="admin-website-entry-form" class="website-entry-form" hidden onsubmit="event.preventDefault(); app.saveWebsite('admin')">
+                        <div class="website-form-heading">
+                            <div>
+                                <span class="website-section-kicker">Website Manager</span>
+                                <h2 id="admin-website-form-title">Add a Website Page</h2>
+                            </div>
+                            <button type="button" class="website-form-close" aria-label="Close form" onclick="app.cancelWebsiteForm('admin')">×</button>
+                        </div>
+                        <input type="hidden" id="admin-website-edit-id">
+                        <div class="website-form-grid">
+                            <div class="form-group">
+                                <label for="admin-website-page-title">Page Title</label>
+                                <input type="text" id="admin-website-page-title" class="input-field" maxlength="100" placeholder="Example: My Portfolio" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-website-page-url">Website URL</label>
+                                <input type="url" id="admin-website-page-url" class="input-field" placeholder="https://example.com" required>
+                            </div>
+                            <div class="form-group website-description-field">
+                                <label for="admin-website-page-description">Description (optional)</label>
+                                <textarea id="admin-website-page-description" class="input-field" rows="3" maxlength="500" placeholder="A short description of this website..."></textarea>
+                            </div>
+                        </div>
+                        <div class="website-form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="app.cancelWebsiteForm('admin')">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="admin-website-save-button">Save Page</button>
+                        </div>
+                    </form>
+                    <div id="admin-website-list" class="website-page-grid" aria-live="polite"></div>
+                    <div id="admin-website-empty" class="website-category-empty" hidden>
+                        <div class="website-empty-mark" aria-hidden="true">
+                            <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                                <rect x="3" y="4" width="18" height="15" rx="2"></rect>
+                                <path d="M3 9h18M8 22h8M12 19v3"></path>
+                            </svg>
+                        </div>
+                        <h2>No website pages yet</h2>
+                        <p>Use Add Website to publish the first page in this category.</p>
+                    </div>
                 </div>
 
                 <div id="admin-tab-bots" class="admin-tab" style="display:none">
@@ -500,9 +578,13 @@
         });
 
         document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') closeCategoryMenu();
+            if (event.key === 'Escape') {
+                closeCategoryMenu();
+                const confirmation = document.getElementById('website-open-confirm-modal');
+                if (confirmation && confirmation.style.display !== 'none') app.cancelWebsiteOpen();
+            }
         });
     </script>
-    <script src="app.js?v=20261015-website-manager"></script>
+    <script src="app.js?v=20261015-website-confirm"></script>
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "468b54ebf85b4f809e3ba2eda2d74612"}'></script></body>
 </html>

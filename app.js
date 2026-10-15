@@ -5,7 +5,7 @@ const CONFIG = {
     allowedUser: 'CihuyAkz',
     branch: 'main',
     cacheBuster: () => Date.now(),
-    localDbCacheVersion: '20261015-website-pages-en',
+    localDbCacheVersion: '20261015-admin-website-manager',
 
     // GitHub Pages URL for this project fork.
     pagesBaseUrl() {
@@ -93,6 +93,8 @@ const app = {
     currentFilter: 'all',
     currentSort: 'newest',
     actionInProgress: false,
+    pendingWebsiteUrl: null,
+    pendingWebsiteTitle: '',
     pendingAdminNavigation: false,
     currentEditingId: null,
     originalTitle: null,
@@ -575,6 +577,65 @@ const app = {
         if (botCount) botCount.textContent = bots;
     },
 
+    confirmOpenWebsite(websiteId) {
+        const website = this.db?.websites?.[websiteId];
+        if (!website || !website.url) {
+            this.showToast('This website link is unavailable. Refresh the page and try again.', 'error');
+            return;
+        }
+
+        let destination;
+        try {
+            destination = new URL(website.url);
+            if (!['http:', 'https:'].includes(destination.protocol)) throw new Error('Unsupported protocol');
+        } catch (_) {
+            this.showToast('This website has an invalid URL.', 'error');
+            return;
+        }
+
+        this.pendingWebsiteUrl = destination.href;
+        this.pendingWebsiteTitle = String(website.title || destination.hostname);
+        const modal = document.getElementById('website-open-confirm-modal');
+        const heading = document.getElementById('website-open-confirm-title');
+        const description = document.getElementById('website-open-confirm-description');
+        const destinationLabel = document.getElementById('website-open-confirm-destination');
+        if (!modal || !heading || !description || !destinationLabel) {
+            // Gracefully fall back to opening the trusted HTTP(S) destination if markup is unavailable.
+            window.open(destination.href, '_blank', 'noopener,noreferrer');
+            return;
+        }
+
+        heading.textContent = 'Open this website?';
+        description.textContent = `You are about to leave CihuyAkz Studio Lite and visit “${this.pendingWebsiteTitle}”. Continue?`;
+        destinationLabel.textContent = destination.hostname;
+        modal.style.display = 'flex';
+        document.getElementById('website-open-accept-button')?.focus();
+    },
+
+    acceptWebsiteOpen() {
+        const destinationUrl = this.pendingWebsiteUrl;
+        if (!destinationUrl) {
+            this.cancelWebsiteOpen();
+            return;
+        }
+
+        this.cancelWebsiteOpen();
+        // This runs directly from the Accept button click to avoid popup-blocker issues.
+        const openedWindow = window.open(destinationUrl, '_blank');
+        if (openedWindow) {
+            try { openedWindow.opener = null; } catch (_) {}
+        } else {
+            window.location.assign(destinationUrl);
+        }
+    },
+
+    cancelWebsiteOpen() {
+        this.pendingWebsiteUrl = null;
+        this.pendingWebsiteTitle = '';
+        const modal = document.getElementById('website-open-confirm-modal');
+        if (modal) modal.style.display = 'none';
+    },
+
     renderWebsiteCategory() {
         const list = document.getElementById('website-list');
         const empty = document.getElementById('website-category-empty');
@@ -613,7 +674,49 @@ const app = {
                     <p>${description}</p>
                     <div class="website-card-footer">
                         <span class="website-card-domain">${utils.escapeHtml(new URL(website.url).hostname)}</span>
-                        <a class="website-open-link" href="${url}" target="_blank" rel="noopener noreferrer">Open Website <span aria-hidden="true">↗</span></a>
+                        <a class="website-open-link" href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.preventDefault(); app.confirmOpenWebsite('${id}')">Open Website <span aria-hidden="true">↗</span></a>
+                    </div>
+                </article>`;
+        }).join('');
+        empty.hidden = websites.length > 0;
+    },
+
+    renderAdminWebsiteManager() {
+        const list = document.getElementById('admin-website-list');
+        const empty = document.getElementById('admin-website-empty');
+        if (!list || !empty) return;
+
+        const websites = Object.values(this.db?.websites || {}).filter(website => {
+            try {
+                const parsed = new URL(website.url);
+                return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+            } catch (_) {
+                return false;
+            }
+        }).sort((a, b) => String(a.title).localeCompare(String(b.title)));
+
+        list.innerHTML = websites.map(website => {
+            const id = utils.escapeHtml(website.id);
+            const title = utils.escapeHtml(website.title);
+            const description = utils.escapeHtml(website.description || 'No description provided.');
+            const parsedUrl = new URL(website.url);
+            const url = utils.escapeHtml(parsedUrl.href);
+            return `
+                <article class="website-page-card">
+                    <div class="website-card-topline">
+                        <span class="website-card-icon" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+                        </span>
+                        <div class="website-card-admin-actions">
+                            <button type="button" class="website-card-action" onclick="app.editWebsite('${id}', 'admin')">Edit</button>
+                            <button type="button" class="website-card-action website-card-delete" onclick="app.deleteWebsite('${id}')">Delete</button>
+                        </div>
+                    </div>
+                    <h3>${title}</h3>
+                    <p>${description}</p>
+                    <div class="website-card-footer">
+                        <span class="website-card-domain">${utils.escapeHtml(parsedUrl.hostname)}</span>
+                        <a class="website-open-link" href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.preventDefault(); app.confirmOpenWebsite('${id}')">Open Website <span aria-hidden="true">↗</span></a>
                     </div>
                 </article>`;
         }).join('');
@@ -638,6 +741,7 @@ const app = {
             }
             try { localStorage.setItem('cihuyakz_local_db_v2', JSON.stringify(this.db)); } catch (_) {}
             this.renderWebsiteCategory();
+            this.renderAdminWebsiteManager();
         } catch (error) {
             console.warn('Could not refresh website category:', error);
         }
@@ -667,18 +771,19 @@ const app = {
         return { database, sha: file.sha };
     },
 
-    showWebsiteForm(websiteId = null) {
+    showWebsiteForm(websiteId = null, context = 'category') {
         if (!this.currentUser) {
             this.showToast('Please log in with the authorized administrator account first.', 'error');
             return;
         }
-        const form = document.getElementById('website-entry-form');
-        const editId = document.getElementById('website-edit-id');
-        const titleInput = document.getElementById('website-page-title');
-        const urlInput = document.getElementById('website-page-url');
-        const descriptionInput = document.getElementById('website-page-description');
-        const heading = document.getElementById('website-form-title');
-        const saveButton = document.getElementById('website-save-button');
+        const prefix = context === 'admin' ? 'admin-website-' : 'website-';
+        const form = document.getElementById(context === 'admin' ? 'admin-website-entry-form' : 'website-entry-form');
+        const editId = document.getElementById(`${prefix}edit-id`);
+        const titleInput = document.getElementById(`${prefix}page-title`);
+        const urlInput = document.getElementById(`${prefix}page-url`);
+        const descriptionInput = document.getElementById(`${prefix}page-description`);
+        const heading = document.getElementById(`${prefix}form-title`);
+        const saveButton = document.getElementById(`${prefix}save-button`);
         if (!form || !editId || !titleInput || !urlInput || !descriptionInput) return;
 
         const website = websiteId ? this.db?.websites?.[websiteId] : null;
@@ -693,30 +798,32 @@ const app = {
         titleInput.focus();
     },
 
-    editWebsite(websiteId) {
-        this.showWebsiteForm(websiteId);
+    editWebsite(websiteId, context = 'category') {
+        this.showWebsiteForm(websiteId, context);
     },
 
-    cancelWebsiteForm() {
-        const form = document.getElementById('website-entry-form');
+    cancelWebsiteForm(context = 'category') {
+        const formId = context === 'admin' ? 'admin-website-entry-form' : 'website-entry-form';
+        const editId = document.getElementById(context === 'admin' ? 'admin-website-edit-id' : 'website-edit-id');
+        const form = document.getElementById(formId);
         if (form) form.hidden = true;
-        document.getElementById('website-entry-form')?.reset();
-        const editId = document.getElementById('website-edit-id');
+        form?.reset();
         if (editId) editId.value = '';
     },
 
-    async saveWebsite() {
+    async saveWebsite(context = 'category') {
         if (!this.currentUser || !this.db) {
             this.showToast('Please log in with the authorized administrator account first.', 'error');
             return;
         }
         if (this.actionInProgress) return;
 
-        const titleInput = document.getElementById('website-page-title');
-        const urlInput = document.getElementById('website-page-url');
-        const descriptionInput = document.getElementById('website-page-description');
-        const editIdInput = document.getElementById('website-edit-id');
-        const saveButton = document.getElementById('website-save-button');
+        const prefix = context === 'admin' ? 'admin-website-' : 'website-';
+        const titleInput = document.getElementById(`${prefix}page-title`);
+        const urlInput = document.getElementById(`${prefix}page-url`);
+        const descriptionInput = document.getElementById(`${prefix}page-description`);
+        const editIdInput = document.getElementById(`${prefix}edit-id`);
+        const saveButton = document.getElementById(`${prefix}save-button`);
         const title = titleInput?.value.trim() || '';
         const urlValue = urlInput?.value.trim() || '';
         const description = descriptionInput?.value.trim() || '';
@@ -816,7 +923,8 @@ const app = {
             this.renderAdminList();
             this.renderAdminStats();
             this.renderWebsiteCategory();
-            this.cancelWebsiteForm();
+            this.renderAdminWebsiteManager();
+            this.cancelWebsiteForm(context);
             this.showToast(`${editingId ? 'Website page updated' : 'Website page added'} successfully.`, 'success');
         } catch (error) {
             this.showToast(error.message || 'Could not save website page.', 'error');
@@ -891,6 +999,7 @@ const app = {
             this.renderAdminList();
             this.renderAdminStats();
             this.renderWebsiteCategory();
+            this.renderAdminWebsiteManager();
             this.showToast('Website page deleted.', 'success');
         } catch (error) {
             this.showToast(error.message || 'Could not delete website page.', 'error');
@@ -1234,6 +1343,13 @@ const app = {
             panel.style.display = 'block';
             this.animateEntry(panel, 'tab-enter');
             this.renderAdminList();
+        } else if (tab === 'websites') {
+            const panel = document.getElementById('admin-tab-websites');
+            if (!panel) return;
+            panel.style.display = 'block';
+            this.animateEntry(panel, 'tab-enter');
+            this.renderAdminWebsiteManager();
+            this.refreshWebsiteEntries();
         } else if (tab === 'bots') {
             const panel = document.getElementById('admin-tab-bots');
             panel.style.display = 'block';
