@@ -93,6 +93,7 @@ const app = {
     currentFilter: 'all',
     currentSort: 'newest',
     actionInProgress: false,
+    pendingAdminNavigation: false,
     currentEditingId: null,
     originalTitle: null,
     originalPageId: null,
@@ -340,7 +341,9 @@ const app = {
 
     toggleLoginModal() {
         const modal = document.getElementById('login-modal');
-        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        const closing = modal.style.display === 'flex';
+        modal.style.display = closing ? 'none' : 'flex';
+        if (closing && !this.currentUser) this.pendingAdminNavigation = false;
         document.getElementById('login-error').style.display = 'none';
         if (modal.style.display === 'flex') {
             document.getElementById('auth-token').focus();
@@ -367,6 +370,10 @@ const app = {
                 await this.loadDatabase();
                 this.renderList();
                 this.showToast('Logged in successfully!', 'success');
+                if (this.pendingAdminNavigation) {
+                    this.pendingAdminNavigation = false;
+                    navigate('admin');
+                }
             }
         } finally {
             this.actionInProgress = false;
@@ -1797,6 +1804,7 @@ const app = {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../access-gate.js"></script>
     <title>${utils.escapeHtml(pageData.title)} - CihuyAkz Studio Lite</title>
     <link rel="icon" type="image/png" href="../../assets/favicon.ico">
     <link rel="stylesheet" href="../../style.css?v=20260925-admin-v2">
@@ -2020,6 +2028,10 @@ const app = {
             adminView.style.display = 'block';
             this.animateEntry(adminView, 'route-enter');
             this.switchAdminTab('list');
+        } else if (hash === 'website') {
+            const websiteView = document.getElementById('view-website');
+            websiteView.style.display = 'block';
+            this.animateEntry(websiteView, 'route-enter');
         } else {
             const homeView = document.getElementById('view-home');
             homeView.style.display = 'block';
@@ -2030,9 +2042,11 @@ const app = {
 
 function navigate(path) {
     if (path === 'admin' && !app.currentUser) {
+        app.pendingAdminNavigation = true;
         app.toggleLoginModal();
         return;
     }
+    app.pendingAdminNavigation = false;
     location.hash = path;
 }
 

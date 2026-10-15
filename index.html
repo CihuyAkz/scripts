@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="access-gate.js"></script>
     <title>CihuyAkz Studio Lite</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css?v=20260926-ui-v3">
+    <link rel="stylesheet" href="style.css?v=20261015-category-pages">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css">
@@ -39,8 +40,37 @@
                 <div id="auth-section">
                     <button class="btn btn-secondary btn-sm" onclick="app.toggleLoginModal()">Login</button>
                 </div>
-                <div id="user-section" style="display:none">
-                    <button class="btn btn-primary btn-sm" onclick="navigate('admin')">Manage</button>
+                <div id="user-section" style="display:none"></div>
+                <div class="category-menu-wrap">
+                    <button type="button" class="category-menu-toggle" id="category-menu-toggle" aria-label="Open category menu" aria-expanded="false" aria-controls="category-menu" onclick="toggleCategoryMenu()">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <nav class="category-menu" id="category-menu" aria-label="Website categories" hidden>
+                        <div class="category-menu-heading">Categories</div>
+                        <button type="button" class="category-menu-item" onclick="closeCategoryMenu(); navigate('')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path d="M4 5h16M4 12h16M4 19h10"></path>
+                            </svg>
+                            <span>Scripts</span>
+                        </button>
+                        <button type="button" class="category-menu-item" onclick="closeCategoryMenu(); navigate('website')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path>
+                            </svg>
+                            <span>Website</span>
+                        </button>
+                        <button type="button" class="category-menu-item" onclick="closeCategoryMenu(); navigate('admin')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                                <circle cx="9" cy="10" r="2.5"></circle>
+                                <path d="M5 17c.8-2 2.1-3 4-3s3.2 1 4 3M15 9h3M15 13h3"></path>
+                            </svg>
+                            <span>Admin</span>
+                        </button>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -122,6 +152,34 @@
                     </div>
                 </main>
             </div>
+        </div>
+
+        <div id="view-website" class="view-section animate__animated animate__fadeIn" style="display:none">
+            <section class="website-category-page">
+                <div class="website-category-heading">
+                    <div class="website-category-icon" aria-hidden="true">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path>
+                        </svg>
+                    </div>
+                    <span class="website-category-eyebrow">Category</span>
+                    <h1>Website</h1>
+                    <p>Website yang kamu tambahkan nanti akan ditampilkan di sini.</p>
+                </div>
+                <div class="website-category-empty">
+                    <div class="website-empty-mark" aria-hidden="true">
+                        <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                            <rect x="3" y="4" width="18" height="15" rx="2"></rect>
+                            <path d="M3 9h18M8 22h8M12 19v3"></path>
+                        </svg>
+                    </div>
+                    <h2>Belum ada website</h2>
+                    <p>Bagian ini sudah disiapkan untuk website yang akan kamu upload nanti.</p>
+                    <!-- Add website cards or links here when website projects are ready. -->
+                </div>
+                <button type="button" class="btn btn-secondary website-back-button" onclick="navigate('')">Kembali ke Scripts</button>
+            </section>
         </div>
 
         <div id="view-admin" class="view-section animate__animated animate__fadeIn" style="display:none">
@@ -375,6 +433,33 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/lua/lua.min.js"></script>
-    <script src="app.js?v=20260926-ui-v3"></script>
+    <script>
+        function toggleCategoryMenu() {
+            const menu = document.getElementById('category-menu');
+            const toggle = document.getElementById('category-menu-toggle');
+            const isOpening = menu.hidden;
+            menu.hidden = !isOpening;
+            toggle.setAttribute('aria-expanded', String(isOpening));
+            toggle.setAttribute('aria-label', isOpening ? 'Close category menu' : 'Open category menu');
+        }
+
+        function closeCategoryMenu() {
+            const menu = document.getElementById('category-menu');
+            const toggle = document.getElementById('category-menu-toggle');
+            if (!menu || !toggle) return;
+            menu.hidden = true;
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('aria-label', 'Open category menu');
+        }
+
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.category-menu-wrap')) closeCategoryMenu();
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') closeCategoryMenu();
+        });
+    </script>
+    <script src="app.js?v=20261015-category-pages"></script>
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "468b54ebf85b4f809e3ba2eda2d74612"}'></script></body>
 </html>
