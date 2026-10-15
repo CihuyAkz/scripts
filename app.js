@@ -1,11 +1,11 @@
 const CONFIG = {
     // GitHub repository used for publishing. Only this GitHub account may log in.
     repoOwner: 'CihuyAkz',
-    repo: 'CihuyAkz',
+    repo: 'scripts',
     allowedUser: 'CihuyAkz',
     branch: 'main',
     cacheBuster: () => Date.now(),
-    localDbCacheVersion: '20260925-reset-mobile-v2',
+    localDbCacheVersion: '20261015-website-pages-en',
 
     // GitHub Pages URL for this project fork.
     pagesBaseUrl() {
@@ -241,6 +241,7 @@ const app = {
         const unlistedFilter = document.getElementById('unlisted-filter');
         if (privateFilter) privateFilter.style.display = 'block';
         if (unlistedFilter) unlistedFilter.style.display = 'block';
+        this.renderWebsiteCategory();
     },
 
     prepareLocalDatabaseCache() {
@@ -260,6 +261,20 @@ const app = {
         const db = (database && typeof database === 'object') ? database : {};
         if (!db.bots || typeof db.bots !== 'object') db.bots = {};
         if (!db.pages || typeof db.pages !== 'object') db.pages = {};
+        if (!db.websites || typeof db.websites !== 'object') db.websites = {};
+
+        Object.entries(db.websites).forEach(([websiteId, website]) => {
+            if (!website || typeof website !== 'object') {
+                delete db.websites[websiteId];
+                return;
+            }
+            website.id = websiteId;
+            website.title = website.title || websiteId;
+            website.url = website.url || '';
+            website.description = website.description || '';
+            website.created = website.created || new Date().toISOString();
+            website.updated = website.updated || website.created;
+        });
 
         // Backward compatibility: turn legacy one-script records into one page each.
         if (db.scripts && typeof db.scripts === 'object' && Object.keys(db.scripts).length) {
@@ -499,6 +514,7 @@ const app = {
                 this.renderList();
                 this.renderAdminList();
                 this.renderAdminStats();
+                this.renderWebsiteCategory();
                 this.scheduleLoadedBots();
                 return;
             }
@@ -521,6 +537,7 @@ const app = {
             this.renderList();
             this.renderAdminList();
             this.renderAdminStats();
+            this.renderWebsiteCategory();
         } catch (e) {
             console.error('DB Error', e);
             const list = document.getElementById('admin-list');
@@ -556,6 +573,331 @@ const app = {
         if (pageCount) pageCount.textContent = pages.length;
         if (scriptCount) scriptCount.textContent = scripts;
         if (botCount) botCount.textContent = bots;
+    },
+
+    renderWebsiteCategory() {
+        const list = document.getElementById('website-list');
+        const empty = document.getElementById('website-category-empty');
+        const addButton = document.getElementById('website-add-button');
+        if (!list || !empty) return;
+
+        const websites = Object.values(this.db?.websites || {}).filter(website => {
+            try {
+                const parsed = new URL(website.url);
+                return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+            } catch (_) {
+                return false;
+            }
+        }).sort((a, b) => String(a.title).localeCompare(String(b.title)));
+
+        if (addButton) addButton.style.display = this.currentUser ? 'inline-flex' : 'none';
+        list.innerHTML = websites.map(website => {
+            const id = utils.escapeHtml(website.id);
+            const title = utils.escapeHtml(website.title);
+            const description = utils.escapeHtml(website.description || 'Open this website to explore its content.');
+            const url = utils.escapeHtml(new URL(website.url).href);
+            const adminActions = this.currentUser ? `
+                <div class="website-card-admin-actions">
+                    <button type="button" class="website-card-action" onclick="app.editWebsite('${id}')">Edit</button>
+                    <button type="button" class="website-card-action website-card-delete" onclick="app.deleteWebsite('${id}')">Delete</button>
+                </div>` : '';
+            return `
+                <article class="website-page-card">
+                    <div class="website-card-topline">
+                        <span class="website-card-icon" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+                        </span>
+                        ${adminActions}
+                    </div>
+                    <h3>${title}</h3>
+                    <p>${description}</p>
+                    <div class="website-card-footer">
+                        <span class="website-card-domain">${utils.escapeHtml(new URL(website.url).hostname)}</span>
+                        <a class="website-open-link" href="${url}" target="_blank" rel="noopener noreferrer">Open Website <span aria-hidden="true">↗</span></a>
+                    </div>
+                </article>`;
+        }).join('');
+        empty.hidden = websites.length > 0;
+    },
+
+    async refreshWebsiteEntries() {
+        try {
+            if (this.currentUser && this.token) {
+                const snapshot = await this.getRemoteDatabaseSnapshot();
+                this.db = snapshot.database;
+                this.dbSha = snapshot.sha;
+                this.renderList();
+                this.renderAdminList();
+                this.renderAdminStats();
+            } else {
+                const response = await fetch(`database.json?t=${Date.now()}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+                if (!response.ok) return;
+                const remoteDatabase = this.normalizeDatabase(await response.json());
+                if (!this.db) this.db = remoteDatabase;
+                else this.db.websites = remoteDatabase.websites || {};
+            }
+            try { localStorage.setItem('cihuyakz_local_db_v2', JSON.stringify(this.db)); } catch (_) {}
+            this.renderWebsiteCategory();
+        } catch (error) {
+            console.warn('Could not refresh website category:', error);
+        }
+    },
+
+    async getRemoteDatabaseSnapshot() {
+        const url = `https://api.github.com/repos/${CONFIG.repoOwner}/${CONFIG.repo}/contents/database.json?ref=${encodeURIComponent(CONFIG.branch)}&t=${Date.now()}`;
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2026-03-10'
+            },
+            cache: 'no-store'
+        });
+        if (!response.ok) {
+            let detail = `HTTP ${response.status}`;
+            try {
+                const body = await response.json();
+                if (body?.message) detail += `: ${body.message}`;
+            } catch (_) {}
+            throw new Error(`Could not load the latest database — ${detail}`);
+        }
+        const file = await response.json();
+        if (!file.content || !file.sha) throw new Error('The repository database file has no readable content.');
+        const database = this.normalizeDatabase(JSON.parse(utils.safeAtob(String(file.content).replace(/\s/g, ''))));
+        return { database, sha: file.sha };
+    },
+
+    showWebsiteForm(websiteId = null) {
+        if (!this.currentUser) {
+            this.showToast('Please log in with the authorized administrator account first.', 'error');
+            return;
+        }
+        const form = document.getElementById('website-entry-form');
+        const editId = document.getElementById('website-edit-id');
+        const titleInput = document.getElementById('website-page-title');
+        const urlInput = document.getElementById('website-page-url');
+        const descriptionInput = document.getElementById('website-page-description');
+        const heading = document.getElementById('website-form-title');
+        const saveButton = document.getElementById('website-save-button');
+        if (!form || !editId || !titleInput || !urlInput || !descriptionInput) return;
+
+        const website = websiteId ? this.db?.websites?.[websiteId] : null;
+        editId.value = website ? website.id : '';
+        titleInput.value = website ? website.title : '';
+        urlInput.value = website ? website.url : '';
+        descriptionInput.value = website ? website.description : '';
+        if (heading) heading.textContent = website ? 'Edit Website Page' : 'Add a Website Page';
+        if (saveButton) saveButton.textContent = website ? 'Update Page' : 'Save Page';
+        form.hidden = false;
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        titleInput.focus();
+    },
+
+    editWebsite(websiteId) {
+        this.showWebsiteForm(websiteId);
+    },
+
+    cancelWebsiteForm() {
+        const form = document.getElementById('website-entry-form');
+        if (form) form.hidden = true;
+        document.getElementById('website-entry-form')?.reset();
+        const editId = document.getElementById('website-edit-id');
+        if (editId) editId.value = '';
+    },
+
+    async saveWebsite() {
+        if (!this.currentUser || !this.db) {
+            this.showToast('Please log in with the authorized administrator account first.', 'error');
+            return;
+        }
+        if (this.actionInProgress) return;
+
+        const titleInput = document.getElementById('website-page-title');
+        const urlInput = document.getElementById('website-page-url');
+        const descriptionInput = document.getElementById('website-page-description');
+        const editIdInput = document.getElementById('website-edit-id');
+        const saveButton = document.getElementById('website-save-button');
+        const title = titleInput?.value.trim() || '';
+        const urlValue = urlInput?.value.trim() || '';
+        const description = descriptionInput?.value.trim() || '';
+        const editingId = editIdInput?.value || '';
+
+        if (!title || title.length > 100) {
+            this.showToast('Enter a title between 1 and 100 characters.', 'error');
+            titleInput?.focus();
+            return;
+        }
+
+        let websiteUrl;
+        try {
+            websiteUrl = new URL(urlValue);
+            if (!['http:', 'https:'].includes(websiteUrl.protocol)) throw new Error('Unsupported protocol');
+        } catch (_) {
+            this.showToast('Enter a valid website URL beginning with http:// or https://.', 'error');
+            urlInput?.focus();
+            return;
+        }
+
+        const websiteId = utils.sanitizeTitle(title);
+        if (!websiteId) {
+            this.showToast('This title cannot be used as a page identifier. Choose another title.', 'error');
+            return;
+        }
+        if (description.length > 500) {
+            this.showToast('The description must be 500 characters or fewer.', 'error');
+            return;
+        }
+        if (!editingId && this.db.websites?.[websiteId]) {
+            this.showToast('A website page with this title already exists.', 'error');
+            return;
+        }
+        if (editingId && websiteId !== editingId && this.db.websites?.[websiteId]) {
+            this.showToast('Another website page already uses this title.', 'error');
+            return;
+        }
+
+        this.actionInProgress = true;
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.textContent = editingId ? 'Updating...' : 'Saving...';
+        }
+        if (typeof NProgress !== 'undefined') NProgress.start();
+
+        try {
+            const snapshot = await this.getRemoteDatabaseSnapshot();
+            const nextDb = snapshot.database;
+            const currentWebsite = editingId ? nextDb.websites?.[editingId] : null;
+            if (editingId && !currentWebsite) throw new Error('This website page no longer exists in the latest database. Refresh the page and try again.');
+            nextDb.websites = nextDb.websites || {};
+            if (!editingId && nextDb.websites[websiteId]) throw new Error('A website page with this title already exists. Refresh the page and try again.');
+            if (editingId && websiteId !== editingId && nextDb.websites[websiteId]) throw new Error('Another website page already uses this title.');
+            if (editingId && editingId !== websiteId) delete nextDb.websites[editingId];
+            const now = new Date().toISOString();
+            nextDb.websites[websiteId] = {
+                id: websiteId,
+                title,
+                url: websiteUrl.href,
+                description,
+                created: currentWebsite?.created || now,
+                updated: now
+            };
+
+            const sha = snapshot.sha;
+            const response = await fetch(`https://api.github.com/repos/${CONFIG.repoOwner}/${CONFIG.repo}/contents/database.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Accept': 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2026-03-10',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `${editingId ? 'Update' : 'Add'} website page: ${title}`,
+                    content: utils.safeBtoa(JSON.stringify(nextDb, null, 2)),
+                    sha,
+                    branch: CONFIG.branch
+                })
+            });
+
+            if (!response.ok) {
+                let detail = `HTTP ${response.status}`;
+                try {
+                    const body = await response.json();
+                    if (body?.message) detail += `: ${body.message}`;
+                } catch (_) {}
+                throw new Error(`Could not save website page — ${detail}`);
+            }
+
+            const saved = await response.json();
+            this.db = nextDb;
+            this.dbSha = saved.content?.sha || null;
+            try { localStorage.setItem('cihuyakz_local_db_v2', JSON.stringify(this.db)); } catch (_) {}
+            this.renderList();
+            this.renderAdminList();
+            this.renderAdminStats();
+            this.renderWebsiteCategory();
+            this.cancelWebsiteForm();
+            this.showToast(`${editingId ? 'Website page updated' : 'Website page added'} successfully.`, 'success');
+        } catch (error) {
+            this.showToast(error.message || 'Could not save website page.', 'error');
+        } finally {
+            this.actionInProgress = false;
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.textContent = editingId ? 'Update Page' : 'Save Page';
+            }
+            if (typeof NProgress !== 'undefined') NProgress.done();
+        }
+    },
+
+    async deleteWebsite(websiteId) {
+        if (!this.currentUser || !this.db?.websites?.[websiteId] || this.actionInProgress) return;
+        const website = this.db.websites[websiteId];
+        let confirmed = false;
+        if (typeof Swal !== 'undefined') {
+            const result = await Swal.fire({
+                title: 'Delete this website page?',
+                text: `"${website.title}" will be removed from the Website category.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Delete Page',
+                cancelButtonText: 'Keep Page',
+                confirmButtonColor: '#dc2626',
+                background: '#16060a',
+                color: '#fff'
+            });
+            confirmed = result.isConfirmed;
+        } else {
+            confirmed = confirm(`Delete "${website.title}" from the Website category?`);
+        }
+        if (!confirmed) return;
+
+        this.actionInProgress = true;
+        if (typeof NProgress !== 'undefined') NProgress.start();
+        try {
+            const snapshot = await this.getRemoteDatabaseSnapshot();
+            const nextDb = snapshot.database;
+            if (!nextDb.websites?.[websiteId]) throw new Error('This website page no longer exists in the latest database. Refresh the page and try again.');
+            delete nextDb.websites[websiteId];
+            const sha = snapshot.sha;
+            const response = await fetch(`https://api.github.com/repos/${CONFIG.repoOwner}/${CONFIG.repo}/contents/database.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Accept': 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2026-03-10',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Delete website page: ${website.title}`,
+                    content: utils.safeBtoa(JSON.stringify(nextDb, null, 2)),
+                    sha,
+                    branch: CONFIG.branch
+                })
+            });
+            if (!response.ok) {
+                let detail = `HTTP ${response.status}`;
+                try {
+                    const body = await response.json();
+                    if (body?.message) detail += `: ${body.message}`;
+                } catch (_) {}
+                throw new Error(`Could not delete website page — ${detail}`);
+            }
+            const saved = await response.json();
+            this.db = nextDb;
+            this.dbSha = saved.content?.sha || null;
+            try { localStorage.setItem('cihuyakz_local_db_v2', JSON.stringify(this.db)); } catch (_) {}
+            this.renderList();
+            this.renderAdminList();
+            this.renderAdminStats();
+            this.renderWebsiteCategory();
+            this.showToast('Website page deleted.', 'success');
+        } catch (error) {
+            this.showToast(error.message || 'Could not delete website page.', 'error');
+        } finally {
+            this.actionInProgress = false;
+            if (typeof NProgress !== 'undefined') NProgress.done();
+        }
     },
 
     scheduleBotTimer(botId, bot) {
@@ -1804,10 +2146,10 @@ const app = {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="../../access-gate.js"></script>
+    <script src="../../access-gate.js?v=20261015-red-session"></script>
     <title>${utils.escapeHtml(pageData.title)} - CihuyAkz Studio Lite</title>
     <link rel="icon" type="image/png" href="../../assets/favicon.ico">
-    <link rel="stylesheet" href="../../style.css?v=20260925-admin-v2">
+    <link rel="stylesheet" href="../../style.css?v=20261015-website-manager">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -2032,6 +2374,8 @@ const app = {
             const websiteView = document.getElementById('view-website');
             websiteView.style.display = 'block';
             this.animateEntry(websiteView, 'route-enter');
+            this.renderWebsiteCategory();
+            this.refreshWebsiteEntries();
         } else {
             const homeView = document.getElementById('view-home');
             homeView.style.display = 'block';

@@ -35,7 +35,7 @@
       "title": "Advanced R6 Animation",
       "displayTitle": "Advanced R6 Animation",
       "visibility": "PUBLIC",
-      "description": "Mengubah Animasi R6 Agar terlihat lebih Bagus(Modified)",
+      "description": "Improves the appearance of R6 animations (modified).",
       "created": "2026-09-25T13:35:56.596Z",
       "updated": "2026-09-25T13:35:56.596Z",
       "scripts": {
@@ -59,8 +59,8 @@
         },
         "animasi-id-yang-ada-di-video": {
           "id": "animasi-id-yang-ada-di-video",
-          "name": "Animasi Id Yang ada di Video",
-          "displayName": "Animasi Id Yang ada di Video",
+          "name": "Animation ID Shown in the Video",
+          "displayName": "Animation ID Shown in the Video",
           "filename": "animasi-id-yang-ada-di-video.lua",
           "size": 14,
           "created": "2026-09-25T13:35:56.596Z",
@@ -69,14 +69,14 @@
       },
       "filename": "index.html"
     },
-    "npc-pose": {
-      "id": "npc-pose",
-      "title": "NPC Pose",
-      "displayTitle": "NPC Pose",
+    "npc-animation": {
+      "id": "npc-animation",
+      "title": "NPC Animation",
+      "displayTitle": "NPC Animation",
       "visibility": "PUBLIC",
       "description": "Animation Idle For NPC",
       "created": "2026-09-26T07:18:31.888Z",
-      "updated": "2026-10-15T01:49:44.169Z",
+      "updated": "2026-09-26T07:50:38.612Z",
       "scripts": {
         "local-script": {
           "id": "local-script",
@@ -85,11 +85,12 @@
           "filename": "local-script.lua",
           "size": 4169,
           "created": "2026-09-26T07:18:31.888Z",
-          "updated": "2026-10-15T01:49:44.169Z"
+          "updated": "2026-09-26T07:50:38.612Z"
         }
       },
       "filename": "index.html"
     }
   },
-  "bots": {}
+  "bots": {},
+  "websites": {}
 }

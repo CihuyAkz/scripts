@@ -15,7 +15,7 @@
     const gateStyle = document.createElement('style');
     gateStyle.textContent = `
         html.ca-session-locked, html.ca-session-locked body {
-            background: #fff !important;
+            background: #090306 !important;
         }
         html.ca-session-locked body > :not(#ca-session-overlay) {
             visibility: hidden !important;
@@ -29,29 +29,108 @@
             justify-content: center !important;
             padding: 24px !important;
             box-sizing: border-box !important;
-            background: #0d0d10 !important;
-            color: #f4f4f5 !important;
+            overflow: auto !important;
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(170, 16, 42, .35), transparent 52%),
+                radial-gradient(ellipse at 100% 100%, rgba(102, 6, 26, .3), transparent 48%),
+                #090306 !important;
+            color: #f7f0f2 !important;
             font: 15px/1.55 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
             visibility: visible !important;
         }
         #ca-session-overlay * { box-sizing: border-box; }
         #ca-session-card {
-            width: min(100%, 420px);
-            padding: 28px;
-            border: 1px solid #34343c;
-            border-radius: 18px;
-            background: #17171c;
-            box-shadow: 0 24px 80px rgba(0,0,0,.42);
+            position: relative;
+            isolation: isolate;
+            width: min(100%, 460px);
+            padding: clamp(28px, 6vw, 42px);
+            overflow: hidden;
+            border: 1px solid rgba(255, 91, 111, .31);
+            border-radius: 24px;
+            background: linear-gradient(150deg, rgba(39, 8, 16, .98), rgba(17, 5, 9, .99) 68%);
+            box-shadow: 0 28px 100px rgba(0, 0, 0, .58), 0 0 0 1px rgba(255, 64, 87, .05), 0 0 72px rgba(165, 12, 40, .13);
             text-align: center;
+            animation: ca-session-enter .38s cubic-bezier(.2,.75,.25,1) both;
         }
-        #ca-session-card h2 { margin: 0 0 10px; color: #fff; font-size: 22px; line-height: 1.25; }
-        #ca-session-card p { margin: 0; color: #bcbcc5; font-size: 14px; }
+        #ca-session-card::before {
+            position: absolute;
+            z-index: -1;
+            top: -100px;
+            left: 50%;
+            width: 270px;
+            height: 160px;
+            content: "";
+            transform: translateX(-50%);
+            border-radius: 50%;
+            background: rgba(229, 36, 67, .2);
+            filter: blur(48px);
+            pointer-events: none;
+        }
+        @keyframes ca-session-enter {
+            from { opacity: 0; transform: translateY(12px) scale(.985); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .ca-session-mark {
+            display: grid;
+            place-items: center;
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 22px;
+            border: 1px solid rgba(255, 108, 126, .4);
+            border-radius: 22px;
+            background: linear-gradient(145deg, rgba(255, 55, 83, .2), rgba(133, 10, 34, .22));
+            color: #ff727f;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 12px 38px rgba(150, 5, 30, .18);
+        }
+        .ca-session-mark svg { width: 30px; height: 30px; display: block; }
+        .ca-session-kicker {
+            margin: 0 0 9px !important;
+            color: #ff8b98 !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: .2em !important;
+            text-transform: uppercase;
+        }
+        #ca-session-card h2 {
+            margin: 0 0 12px;
+            color: #fff !important;
+            font-size: clamp(23px, 5vw, 29px);
+            font-weight: 750;
+            line-height: 1.2;
+            letter-spacing: -.035em;
+        }
+        #ca-session-card p { margin: 0; color: #d2b9bf; font-size: 14px; }
         #ca-session-card button {
-            width: 100%; margin-top: 22px; padding: 12px 16px; border: 0; border-radius: 10px;
-            background: #e5484d; color: #fff; font: inherit; font-weight: 700; cursor: pointer;
+            display: block;
+            width: 100%;
+            margin-top: 24px;
+            padding: 13px 18px;
+            border: 1px solid rgba(255, 171, 181, .2);
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f0445d, #bd1739);
+            color: #fff;
+            font: inherit;
+            font-weight: 750;
+            letter-spacing: .01em;
+            cursor: pointer;
+            box-shadow: 0 12px 28px rgba(195, 20, 49, .22);
+            transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
         }
-        #ca-session-card button:hover { background: #f15b61; }
-        #ca-session-footnote { margin-top: 14px !important; color: #777783 !important; font-size: 12px !important; }
+        #ca-session-card button:hover { filter: brightness(1.08); box-shadow: 0 14px 32px rgba(195, 20, 49, .32); }
+        #ca-session-card button:active { transform: scale(.985); }
+        #ca-session-footnote {
+            margin-top: 18px !important;
+            color: #92727a !important;
+            font-size: 11px !important;
+        }
+        @media (max-width: 480px) {
+            #ca-session-overlay { padding: 16px !important; }
+            #ca-session-card { border-radius: 20px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #ca-session-card { animation: none; }
+            #ca-session-card button { transition: none; }
+        }
     `;
     document.head.appendChild(gateStyle);
 
@@ -135,6 +214,13 @@
                 overlay.setAttribute('aria-modal', 'true');
                 const card = document.createElement('div');
                 card.id = 'ca-session-card';
+                const mark = document.createElement('div');
+                mark.className = 'ca-session-mark';
+                mark.setAttribute('aria-hidden', 'true');
+                mark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 21 7v5c0 5-3.8 8.2-9 9-5.2-.8-9-4-9-9V7l9-4Z"></path><path d="M12 8v4M12 16h.01"></path></svg>';
+                const kicker = document.createElement('p');
+                kicker.className = 'ca-session-kicker';
+                kicker.textContent = 'Session Security';
                 const title = document.createElement('h2');
                 title.id = 'ca-session-title';
                 const message = document.createElement('p');
@@ -144,7 +230,7 @@
                 button.type = 'button';
                 const footnote = document.createElement('p');
                 footnote.id = 'ca-session-footnote';
-                card.append(title, message, button, footnote);
+                card.append(mark, kicker, title, message, button, footnote);
                 overlay.appendChild(card);
                 document.body.appendChild(overlay);
             }
@@ -154,26 +240,26 @@
             const footnote = document.getElementById('ca-session-footnote');
             button.onclick = null;
             button.style.display = 'none';
-            footnote.textContent = 'Masa sesi: 30 menit sejak sesi dibuat.';
+            footnote.textContent = 'Session duration: 6 hours.';
 
             if (mode === 'expired') {
-                title.textContent = 'Sesi sudah kedaluwarsa';
-                message.textContent = 'Sesi ini sudah melewati batas 30 menit. Perbarui sesi untuk membuka website lagi.';
-                button.textContent = 'Perbarui Sesi';
+                title.textContent = 'Session Expired';
+                message.textContent = 'This 6-hour session has expired. Renew your session to continue browsing.';
+                button.textContent = 'Renew Session';
                 button.style.display = 'block';
                 button.onclick = startNewSession;
             } else if (mode === 'device') {
-                title.textContent = 'Tautan ini terikat ke browser lain';
-                message.textContent = 'Buka tautan sesi dari profil browser yang pertama kali membuatnya. URL saja tidak dapat memindahkan sesi ini.';
-                footnote.textContent = 'Mode sederhana: penguncian hanya berlaku pada profil browser, bukan pemeriksaan server.';
+                title.textContent = 'Other Device Detected';
+                message.textContent = 'This session link is tied to another browser profile. Return to the main website and start a session on this browser.';
+                footnote.textContent = 'Session links can only continue in the browser profile that created them.';
             } else if (mode === 'changed') {
-                title.textContent = 'Tautan sesi tidak berlaku';
-                message.textContent = 'URL ini sudah bukan sesi aktif di browser ini. Buka alamat website utama untuk memulai atau memperbarui sesi.';
-                footnote.textContent = 'Mode sederhana: perlindungan dilakukan di browser.';
+                title.textContent = 'Invalid Session Link';
+                message.textContent = 'This link no longer matches the active browser session. Open the main website to start a new session.';
+                footnote.textContent = 'The session link is no longer active in this browser.';
             } else {
-                title.textContent = 'Penyimpanan browser tidak tersedia';
-                message.textContent = 'Website perlu menyimpan sesi di browser. Aktifkan penyimpanan situs lalu muat ulang halaman.';
-                footnote.textContent = 'Sesi tidak dapat dibuat tanpa localStorage.';
+                title.textContent = 'Browser Storage Unavailable';
+                message.textContent = 'This website needs browser storage to create your session. Enable site storage and reload the page.';
+                footnote.textContent = 'A session cannot be created while browser storage is disabled.';
             }
         };
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render, { once: true });

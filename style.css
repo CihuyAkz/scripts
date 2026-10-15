@@ -2410,3 +2410,250 @@ body {
     .website-category-empty { border-radius: 16px; }
 }
 
+
+/* Website category page manager */
+.website-category-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 0 18px;
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 84, 84, .2);
+    border-radius: 17px;
+    background: linear-gradient(110deg, rgba(44, 7, 15, .94), rgba(18, 5, 8, .92));
+    box-shadow: 0 14px 40px rgba(70, 0, 15, .12);
+}
+
+.website-section-kicker {
+    display: block;
+    margin-bottom: 5px;
+    color: #ff8e98;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+}
+
+.website-category-toolbar h2,
+.website-form-heading h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 750;
+    letter-spacing: -.025em;
+}
+
+.website-add-button {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding-inline: 16px;
+    border: 1px solid rgba(255, 170, 180, .22);
+    background: linear-gradient(135deg, #ed4059, #b9193b);
+    box-shadow: 0 9px 24px rgba(164, 8, 35, .2);
+}
+
+.website-entry-form[hidden] { display: none !important; }
+
+.website-entry-form {
+    margin: 0 0 22px;
+    padding: clamp(20px, 4vw, 28px);
+    border: 1px solid rgba(255, 91, 111, .33);
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(39, 7, 15, .98), rgba(15, 4, 8, .98));
+    box-shadow: 0 22px 58px rgba(85, 0, 20, .2), inset 0 1px rgba(255,255,255,.025);
+    animation: category-menu-enter .18s ease-out;
+}
+
+.website-form-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.website-form-close {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border: 1px solid rgba(255, 126, 143, .24);
+    border-radius: 10px;
+    background: rgba(255, 54, 82, .07);
+    color: #ffc4cc;
+    font-size: 23px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.website-form-close:hover {
+    border-color: rgba(255, 126, 143, .5);
+    background: rgba(255, 54, 82, .14);
+}
+
+.website-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 16px;
+}
+
+.website-form-grid .form-group { min-width: 0; }
+.website-description-field { grid-column: 1 / -1; }
+
+.website-entry-form .input-field {
+    border-color: rgba(255, 104, 123, .19);
+    background: rgba(8, 3, 6, .72);
+}
+
+.website-entry-form .input-field:focus {
+    border-color: rgba(255, 88, 109, .68);
+    box-shadow: 0 0 0 3px rgba(235, 48, 76, .1);
+}
+
+.website-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.website-page-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.website-page-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 218px;
+    padding: 21px;
+    border: 1px solid rgba(255, 83, 105, .2);
+    border-radius: 18px;
+    background: linear-gradient(150deg, rgba(37, 7, 14, .93), rgba(15, 4, 8, .96));
+    box-shadow: 0 16px 38px rgba(64, 0, 14, .13);
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+.website-page-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 91, 111, .4);
+    box-shadow: 0 22px 48px rgba(95, 0, 21, .2);
+}
+
+.website-card-topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.website-card-icon {
+    width: 43px;
+    height: 43px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 43px;
+    border: 1px solid rgba(255, 91, 111, .25);
+    border-radius: 13px;
+    background: linear-gradient(145deg, rgba(255, 54, 82, .17), rgba(135, 9, 34, .14));
+    color: #ff8b98;
+}
+
+.website-card-admin-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.website-card-action {
+    padding: 7px 10px;
+    border: 1px solid rgba(255, 120, 138, .2);
+    border-radius: 9px;
+    background: rgba(255, 54, 82, .055);
+    color: #efc3ca;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .16s ease, border-color .16s ease;
+}
+
+.website-card-action:hover {
+    border-color: rgba(255, 120, 138, .42);
+    background: rgba(255, 54, 82, .14);
+}
+
+.website-card-action.website-card-delete { color: #ff8c98; }
+
+.website-page-card h3 {
+    overflow-wrap: anywhere;
+    margin: 0 0 8px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 750;
+    letter-spacing: -.025em;
+}
+
+.website-page-card > p {
+    margin: 0 0 20px;
+    color: #c9aeb3;
+    font-size: 13px;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+}
+
+.website-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 84, 104, .14);
+}
+
+.website-card-domain {
+    min-width: 0;
+    overflow: hidden;
+    color: #a9868d;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.website-open-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    color: #ff8d99;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.website-open-link:hover { color: #ffd0d6; }
+.website-category-empty[hidden] { display: none !important; }
+
+@media (max-width: 680px) {
+    .website-category-toolbar { align-items: stretch; flex-direction: column; }
+    .website-add-button { width: 100%; }
+    .website-page-grid { grid-template-columns: minmax(0, 1fr); }
+    .website-form-grid { grid-template-columns: minmax(0, 1fr); }
+    .website-description-field { grid-column: auto; }
+    .website-form-actions { flex-direction: column-reverse; }
+    .website-form-actions .btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .website-page-card { transition: none; }
+    .website-page-card:hover { transform: none; }
+}

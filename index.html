@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="access-gate.js"></script>
+    <script src="access-gate.js?v=20261015-red-session"></script>
     <title>CihuyAkz Studio Lite</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css?v=20261015-category-pages">
+    <link rel="stylesheet" href="style.css?v=20261015-website-manager">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css">
@@ -79,7 +79,7 @@
     <div id="login-modal" class="modal-overlay animate__animated animate__fadeIn" style="display:none" onclick="if(event.target===this) app.toggleLoginModal()">
         <div class="modal animate__animated animate__zoomIn">
             <div class="modal-header">
-                <h3>Login CihuyAkz</h3>
+                <h3>CihuyAkz Login</h3>
                 <button class="close-btn" onclick="app.toggleLoginModal()">×</button>
             </div>
             <div class="modal-body">
@@ -165,20 +165,63 @@
                     </div>
                     <span class="website-category-eyebrow">Category</span>
                     <h1>Website</h1>
-                    <p>Website yang kamu tambahkan nanti akan ditampilkan di sini.</p>
+                    <p>Explore website projects and pages published in this collection.</p>
                 </div>
-                <div class="website-category-empty">
+
+                <div class="website-category-toolbar">
+                    <div>
+                        <span class="website-section-kicker">Website collection</span>
+                        <h2>Published Websites</h2>
+                    </div>
+                    <button type="button" class="btn btn-primary website-add-button" id="website-add-button" onclick="app.showWebsiteForm()" style="display:none">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                        Add Page
+                    </button>
+                </div>
+
+                <form id="website-entry-form" class="website-entry-form" hidden onsubmit="event.preventDefault(); app.saveWebsite()">
+                    <div class="website-form-heading">
+                        <div>
+                            <span class="website-section-kicker">Content manager</span>
+                            <h2 id="website-form-title">Add a Website Page</h2>
+                        </div>
+                        <button type="button" class="website-form-close" aria-label="Close form" onclick="app.cancelWebsiteForm()">×</button>
+                    </div>
+                    <input type="hidden" id="website-edit-id">
+                    <div class="website-form-grid">
+                        <div class="form-group">
+                            <label for="website-page-title">Page Title</label>
+                            <input type="text" id="website-page-title" class="input-field" maxlength="100" placeholder="Example: My Portfolio" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="website-page-url">Website URL</label>
+                            <input type="url" id="website-page-url" class="input-field" placeholder="https://example.com" required>
+                        </div>
+                        <div class="form-group website-description-field">
+                            <label for="website-page-description">Description (optional)</label>
+                            <textarea id="website-page-description" class="input-field" rows="3" maxlength="500" placeholder="A short description of this website..."></textarea>
+                        </div>
+                    </div>
+                    <div class="website-form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="app.cancelWebsiteForm()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="website-save-button">Save Page</button>
+                    </div>
+                </form>
+
+                <div id="website-list" class="website-page-grid" aria-live="polite"></div>
+                <div id="website-category-empty" class="website-category-empty" hidden>
                     <div class="website-empty-mark" aria-hidden="true">
                         <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
                             <rect x="3" y="4" width="18" height="15" rx="2"></rect>
                             <path d="M3 9h18M8 22h8M12 19v3"></path>
                         </svg>
                     </div>
-                    <h2>Belum ada website</h2>
-                    <p>Bagian ini sudah disiapkan untuk website yang akan kamu upload nanti.</p>
-                    <!-- Add website cards or links here when website projects are ready. -->
+                    <h2>No websites yet</h2>
+                    <p>Website pages added by the administrator will appear here.</p>
                 </div>
-                <button type="button" class="btn btn-secondary website-back-button" onclick="navigate('')">Kembali ke Scripts</button>
+                <button type="button" class="btn btn-secondary website-back-button" onclick="navigate('')">Back to Scripts</button>
             </section>
         </div>
 
@@ -460,6 +503,6 @@
             if (event.key === 'Escape') closeCategoryMenu();
         });
     </script>
-    <script src="app.js?v=20261015-category-pages"></script>
+    <script src="app.js?v=20261015-website-manager"></script>
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "468b54ebf85b4f809e3ba2eda2d74612"}'></script></body>
 </html>
